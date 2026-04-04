@@ -18,9 +18,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
+	ctrlwebhook "sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	seamv1alpha1 "github.com/ontai-dev/seam-core/api/v1alpha1"
 	"github.com/ontai-dev/seam-core/internal/controller"
+	"github.com/ontai-dev/seam-core/internal/webhook"
 )
 
 var scheme = runtime.NewScheme()
@@ -35,6 +37,7 @@ func main() {
 		metricsAddr          string
 		healthProbeAddr      string
 		enableLeaderElection bool
+		webhookPort          int
 	)
 
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080",
@@ -44,6 +47,8 @@ func main() {
 	flag.BoolVar(&enableLeaderElection, "leader-elect", true,
 		"Enable leader election for controller manager. "+
 			"Ensures only one instance is active at a time.")
+	flag.IntVar(&webhookPort, "webhook-port", 9443,
+		"The port the admission webhook server binds to.")
 
 	opts := zap.Options{}
 	opts.BindFlags(flag.CommandLine)
@@ -61,6 +66,9 @@ func main() {
 		LeaderElection:          enableLeaderElection,
 		LeaderElectionID:        "seam-core-leader",
 		LeaderElectionNamespace: "seam-system",
+		WebhookServer: ctrlwebhook.NewServer(ctrlwebhook.Options{
+			Port: webhookPort,
+		}),
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
@@ -83,6 +91,18 @@ func main() {
 			os.Exit(1)
 		}
 	}
+
+	// Register admission webhooks for InfrastructureLineageIndex.
+	// Both webhooks must be registered before mgr.Start.
+	//
+	// RegisterImmutability: rejects UPDATE requests that modify spec.rootBinding.
+	// seam-core-schema.md §3.1, domain-core-schema.md §2.1.
+	//
+	// RegisterAuthorship: rejects CREATE/UPDATE from any principal other than the
+	// LineageController ServiceAccount. CLAUDE.md §14 Decision 3.
+	webhookServer := webhook.NewAdmissionWebhookServer(mgr)
+	webhookServer.RegisterImmutability()
+	webhookServer.RegisterAuthorship()
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
 		setupLog.Error(err, "unable to set up health check")
