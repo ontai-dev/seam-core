@@ -11,24 +11,16 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
+	"github.com/ontai-dev/seam-core/pkg/conditions"
 	"github.com/ontai-dev/seam-core/pkg/lineage"
 )
 
-// Condition type constants for InfrastructureLineageIndex.
-// These are declared here so the InfrastructureLineageController has a canonical
-// source of truth for the condition types it manages. seam-core-schema.md §7 Declaration 5.
+// ConditionTypeLineageSynced and ReasonLineageControllerAbsent are re-exported from
+// pkg/conditions as the canonical source of truth. seam-core-schema.md §7
+// Declaration 5. Consumers should prefer importing pkg/conditions directly. Gap 31.
 const (
-	// ConditionTypeLineageSynced is the reserved condition type set on root
-	// declaration CRs across all Seam operators. Initialized to False by the
-	// operator reconciler on first observation; ownership transfers to
-	// InfrastructureLineageController on deployment, which sets it to True.
-	// No Seam Operator may repurpose this condition type name for any other meaning.
-	ConditionTypeLineageSynced = "LineageSynced"
-
-	// ReasonLineageControllerAbsent is used when the operator reconciler initializes
-	// LineageSynced to False. It communicates that InfrastructureLineageController
-	// is not yet deployed and therefore has not processed the root declaration.
-	ReasonLineageControllerAbsent = "LineageControllerAbsent"
+	ConditionTypeLineageSynced    = conditions.ConditionTypeLineageSynced
+	ReasonLineageControllerAbsent = conditions.ReasonLineageControllerAbsent
 )
 
 // InfrastructureLineageIndexRootBinding records the root declaration that anchors
