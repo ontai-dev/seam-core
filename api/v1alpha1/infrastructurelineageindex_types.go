@@ -44,8 +44,16 @@ type InfrastructureLineageIndexRootBinding struct {
 }
 
 // DescendantEntry records a single derived object in the lineage index.
-// Entries are appended monotonically. An entry is never modified or removed.
+// Entries are appended monotonically. An entry is never modified or removed
+// except by the retention enforcement loop (which removes stale entries after
+// the retention window elapses).
 type DescendantEntry struct {
+	// Group is the API group of the derived object (e.g., platform.ontai.dev).
+	Group string `json:"group"`
+
+	// Version is the API version of the derived object (e.g., v1alpha1).
+	Version string `json:"version"`
+
 	// Kind is the kind of the derived object.
 	Kind string `json:"kind"`
 
@@ -71,6 +79,13 @@ type DescendantEntry struct {
 	// RootGenerationAtCreation is the metadata.generation of the root declaration
 	// at the time this derived object was created.
 	RootGenerationAtCreation int64 `json:"rootGenerationAtCreation"`
+
+	// RecordedAt is the time this descendant entry was appended to the registry.
+	// Used by the retention enforcement loop to determine when a stale entry
+	// (referenced object no longer exists) has exceeded its retention window.
+	//
+	// +optional
+	RecordedAt *metav1.Time `json:"recordedAt,omitempty"`
 }
 
 // InfrastructurePolicyBindingStatus records the InfrastructurePolicy and
