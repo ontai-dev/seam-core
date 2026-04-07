@@ -79,6 +79,16 @@ var vocabulary = map[string]map[string]struct{}{
 		ReasonWebhookRegistered,
 	),
 
+	// ── Guardian — PermissionSnapshot ─────────────────────────────────────────
+	ConditionTypePermissionSnapshotFresh: reasons(
+		ReasonSnapshotFresh,
+		ReasonSnapshotStale,
+	),
+	ConditionTypePermissionSnapshotCompliant: reasons(
+		ReasonDriftAbsent,
+		ReasonDriftDetected,
+	),
+
 	// ── Platform — TalosCluster and shared day-2 operation types ────────────
 	//
 	// "Ready" is a union of all operators and CRDs that use this type string.

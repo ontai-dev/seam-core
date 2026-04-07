@@ -236,6 +236,38 @@ const (
 	ReasonWebhookRegistered = "WebhookRegistered"
 )
 
+const (
+	// ConditionTypePermissionSnapshotFresh indicates whether a PermissionSnapshot
+	// is fresh relative to its spec.freshnessWindowSeconds. The reconciler sets
+	// this to True on first observation and re-evaluates on every requeue.
+	// Terminal state: False (stale) when snapshot age exceeds freshnessWindowSeconds.
+	// Operators: guardian (PermissionSnapshotReconciler, both roles).
+	ConditionTypePermissionSnapshotFresh = "Fresh"
+
+	// ReasonSnapshotFresh is set on Fresh=True when the snapshot age is within
+	// spec.freshnessWindowSeconds from SnapshotTimestamp.
+	ReasonSnapshotFresh = "SnapshotFresh"
+
+	// ReasonSnapshotStale is set on Fresh=False when the snapshot age has
+	// exceeded spec.freshnessWindowSeconds.
+	ReasonSnapshotStale = "SnapshotStale"
+)
+
+const (
+	// ConditionTypePermissionSnapshotCompliant indicates whether the observed RBAC
+	// surface on the target cluster matches the snapshot content.
+	// Terminal state: False (non-compliant) when drift is detected by Guardian's
+	// drift detection loop on the management cluster.
+	// Operators: guardian (management cluster drift detection).
+	ConditionTypePermissionSnapshotCompliant = "Compliant"
+
+	// ReasonDriftAbsent is set on Compliant=True when no RBAC drift is detected
+	// between the snapshot content and the observed cluster RBAC surface.
+	ReasonDriftAbsent = "DriftAbsent"
+	// ReasonDriftDetected (already declared under PackInstance) is reused on
+	// Compliant=False when drift is detected. String value: "DriftDetected".
+)
+
 // ─── Platform — TalosCluster conditions ──────────────────────────────────────
 // Operator: platform (platform.ontai.dev), TalosCluster CR.
 
