@@ -94,29 +94,28 @@ func zoneContent(t *testing.T, fc client.Client) string {
 // ── TalosCluster tests ────────────────────────────────────────────────────────
 
 // TestDSNSReconciler_TalosCluster_ReadyState verifies that a Ready TalosCluster
-// produces an A record for the VIP, an A record for the API endpoint, and a TXT
-// role record.
+// produces an A record for the cluster endpoint, an A record for the api endpoint,
+// and a TXT role record carrying status.origin.
+// Bug fix: tests updated to use spec.clusterEndpoint (not spec.vip/status.apiEndpoint)
+// and status.origin (not spec.infrastructure.provider) per platform commit 02132d1.
 func TestDSNSReconciler_TalosCluster_ReadyState(t *testing.T) {
 	t.Parallel()
-	fc := newFakeClient(t)
-	state := idns.NewDSNSState(fc)
 
 	tc := newUnstructured(talosClusterGVK, "cluster1", "ont-system")
-	setField(tc, "10.20.0.10", "spec", "vip")
-	setField(tc, "10.20.0.10", "status", "apiEndpoint")
-	setField(tc, "management", "spec", "infrastructure", "provider")
+	setField(tc, "10.20.0.10", "spec", "clusterEndpoint")
+	setField(tc, "bootstrapped", "status", "origin")
 	setCondition(tc, "Ready", "True", "ClusterReady", "2026-04-06T00:00:00Z")
 
-	fc2 := newFakeClient(t, tc)
-	state = idns.NewDSNSState(fc2)
-	r := newDSNSReconciler(fc2, talosClusterGVK, state)
+	fc := newFakeClient(t, tc)
+	state := idns.NewDSNSState(fc)
+	r := newDSNSReconciler(fc, talosClusterGVK, state)
 	reconcile(t, r, tc)
 
-	zone := zoneContent(t, fc2)
+	zone := zoneContent(t, fc)
 	wantLines := []string{
 		"cluster1 300 IN A 10.20.0.10",
 		"api.cluster1 300 IN A 10.20.0.10",
-		`role.cluster1 300 IN TXT "management"`,
+		`role.cluster1 300 IN TXT "bootstrapped"`,
 	}
 	for _, want := range wantLines {
 		if !strings.Contains(zone, want) {
@@ -130,8 +129,7 @@ func TestDSNSReconciler_TalosCluster_ReadyState(t *testing.T) {
 func TestDSNSReconciler_TalosCluster_NotReady(t *testing.T) {
 	t.Parallel()
 	tc := newUnstructured(talosClusterGVK, "cluster-nr", "ont-system")
-	setField(tc, "10.20.0.10", "spec", "vip")
-	setField(tc, "10.20.0.10", "status", "apiEndpoint")
+	setField(tc, "10.20.0.10", "spec", "clusterEndpoint")
 	// No Ready=True condition.
 
 	fc := newFakeClient(t, tc)
@@ -146,13 +144,14 @@ func TestDSNSReconciler_TalosCluster_NotReady(t *testing.T) {
 }
 
 // TestDSNSReconciler_TalosCluster_SovereignProvider verifies that a TalosCluster
-// with provider="screen" emits an NS delegation record instead of a TXT role record.
+// with infrastructureProvider="screen" emits an NS delegation record instead of a
+// TXT role record. Bug fix: field path updated to spec.infrastructureProvider
+// (json tag) from stale spec.infrastructure.provider (nested struct).
 func TestDSNSReconciler_TalosCluster_SovereignProvider(t *testing.T) {
 	t.Parallel()
 	tc := newUnstructured(talosClusterGVK, "sovereign1", "ont-system")
-	setField(tc, "10.20.0.30", "spec", "vip")
-	setField(tc, "10.20.0.30", "status", "apiEndpoint")
-	setField(tc, "screen", "spec", "infrastructure", "provider")
+	setField(tc, "10.20.0.30", "spec", "clusterEndpoint")
+	setField(tc, "screen", "spec", "infrastructureProvider")
 	setCondition(tc, "Ready", "True", "ClusterReady", "2026-04-06T00:00:00Z")
 
 	fc := newFakeClient(t, tc)
@@ -178,9 +177,8 @@ func TestDSNSReconciler_TalosCluster_SovereignProvider(t *testing.T) {
 func TestDSNSReconciler_TalosCluster_Deletion(t *testing.T) {
 	t.Parallel()
 	tc := newUnstructured(talosClusterGVK, "cluster-del", "ont-system")
-	setField(tc, "10.20.0.10", "spec", "vip")
-	setField(tc, "10.20.0.10", "status", "apiEndpoint")
-	setField(tc, "management", "spec", "infrastructure", "provider")
+	setField(tc, "10.20.0.10", "spec", "clusterEndpoint")
+	setField(tc, "bootstrapped", "status", "origin")
 	setCondition(tc, "Ready", "True", "ClusterReady", "2026-04-06T00:00:00Z")
 
 	fc := newFakeClient(t, tc)
@@ -392,6 +390,54 @@ func TestDSNSReconciler_StaticAuthorityRecord(t *testing.T) {
 	want := `authority.conductor 300 IN TXT "SHA256:AAABBBCCC111222333"`
 	if !strings.Contains(zone, want) {
 		t.Errorf("zone missing authority.conductor record:\nwant: %q\ngot:\n%s", want, zone)
+	}
+}
+
+// TestDSNSReconciler_TalosCluster_SpecModeFallback verifies that when status.origin
+// is empty, the role TXT falls back to spec.mode.
+func TestDSNSReconciler_TalosCluster_SpecModeFallback(t *testing.T) {
+	t.Parallel()
+	tc := newUnstructured(talosClusterGVK, "cluster-import", "ont-system")
+	setField(tc, "10.20.0.50", "spec", "clusterEndpoint")
+	setField(tc, "import", "spec", "mode") // status.origin absent — fall back to spec.mode
+	setCondition(tc, "Ready", "True", "ClusterReady", "2026-04-06T00:00:00Z")
+
+	fc := newFakeClient(t, tc)
+	state := idns.NewDSNSState(fc)
+	r := newDSNSReconciler(fc, talosClusterGVK, state)
+	reconcile(t, r, tc)
+
+	zone := zoneContent(t, fc)
+	if !strings.Contains(zone, `role.cluster-import 300 IN TXT "import"`) {
+		t.Errorf("zone missing spec.mode fallback TXT:\n%s", zone)
+	}
+}
+
+// TestDSNSReconciler_StaticNsGlueRecord verifies that a static ns A record set via
+// DSNSState.SetStaticRecord (seeded from DSNS_SERVICE_IP in main.go) appears in the
+// zone so that CoreDNS can resolve its own nameserver ns.seam.ontave.dev.
+// Bug 2 fix: ns.seam.ontave.dev had no A record; SOA declared it as nameserver but
+// it was unresolvable.
+func TestDSNSReconciler_StaticNsGlueRecord(t *testing.T) {
+	t.Parallel()
+	fc := newFakeClient(t)
+	state := idns.NewDSNSState(fc)
+
+	const dsnsIP = "10.20.0.241"
+	state.SetStaticRecord(idns.Record{
+		Name:  "ns",
+		Type:  idns.RecordTypeA,
+		Value: dsnsIP,
+	})
+
+	if err := state.Apply(context.Background()); err != nil {
+		t.Fatalf("Apply: %v", err)
+	}
+
+	zone := zoneContent(t, fc)
+	want := "ns 300 IN A 10.20.0.241"
+	if !strings.Contains(zone, want) {
+		t.Errorf("zone missing ns glue A record:\nwant: %q\ngot:\n%s", want, zone)
 	}
 }
 

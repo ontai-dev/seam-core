@@ -244,28 +244,42 @@ func (r *DSNSReconciler) SetupWithManager(mgr ctrl.Manager) error {
 // ── record derivation — one function per GVK ─────────────────────────────────
 
 // deriveTalosClusterRecords emits:
-//   - A record at {cluster-name} → spec.vip
-//   - A record at api.{cluster-name} → status.apiEndpoint
-//   - TXT record at role.{cluster-name} → spec.infrastructure.provider
-//     OR sovereign NS delegation if provider == "screen".
+//   - A record at {cluster-name} → spec.clusterEndpoint
+//   - A record at api.{cluster-name} → spec.clusterEndpoint
+//   - TXT record at role.{cluster-name} → status.origin (or spec.mode fallback)
+//     OR sovereign NS delegation if spec.infrastructureProvider == "screen".
 //
+// Returns nil when Ready=False or spec.clusterEndpoint is empty.
+//
+// Bug fix: prior code read spec.vip and status.apiEndpoint — neither field exists
+// in TalosClusterSpec. The correct unstructured key is "clusterEndpoint" (json tag
+// from ClusterEndpoint string `json:"clusterEndpoint,omitempty"`).
+// Bug fix: screen provider check used stale path spec.infrastructure.provider —
+// corrected to spec.infrastructureProvider (json tag: infrastructureProvider).
+// Bug fix: role TXT used spec.infrastructure.provider — replaced with status.origin
+// (bootstrapped/imported) falling back to spec.mode (bootstrap/import).
 // seam-core-schema.md §8 Decision 4 — Platform records.
 func deriveTalosClusterRecords(obj *unstructured.Unstructured) []idns.Record {
 	if !hasConditionTrue(obj, "Ready") {
 		return nil
 	}
 	name := obj.GetName()
-	vip, _, _ := unstructured.NestedString(obj.Object, "spec", "vip")
-	apiEndpoint, _, _ := unstructured.NestedString(obj.Object, "status", "apiEndpoint")
-	provider, _, _ := unstructured.NestedString(obj.Object, "spec", "infrastructure", "provider")
 
-	if vip == "" || apiEndpoint == "" {
+	// spec.clusterEndpoint is the json tag for ClusterEndpoint string on
+	// TalosClusterSpec. platform commit 02132d1 added this field.
+	clusterEndpoint, _, _ := unstructured.NestedString(obj.Object, "spec", "clusterEndpoint")
+	if clusterEndpoint == "" {
 		return nil
 	}
 
+	// spec.infrastructureProvider is the json tag for InfrastructureProvider on
+	// TalosClusterSpec. Stale path was spec.infrastructure.provider (nested struct
+	// that does not exist). platform-schema.md §5.
+	provider, _, _ := unstructured.NestedString(obj.Object, "spec", "infrastructureProvider")
+
 	records := []idns.Record{
-		{Name: name, Type: idns.RecordTypeA, Value: vip},
-		{Name: "api." + name, Type: idns.RecordTypeA, Value: apiEndpoint},
+		{Name: name, Type: idns.RecordTypeA, Value: clusterEndpoint},
+		{Name: "api." + name, Type: idns.RecordTypeA, Value: clusterEndpoint},
 	}
 
 	if provider == "screen" {
@@ -274,11 +288,16 @@ func deriveTalosClusterRecords(obj *unstructured.Unstructured) []idns.Record {
 		nsFQDN := "ns." + name + "." + idns.Zone
 		records = append(records,
 			idns.Record{Name: name, Type: idns.RecordTypeNS, Value: nsFQDN},
-			// Glue A record for the NS nameserver.
-			idns.Record{Name: "ns." + name, Type: idns.RecordTypeA, Value: vip},
+			// Glue A record for the sovereign NS nameserver.
+			idns.Record{Name: "ns." + name, Type: idns.RecordTypeA, Value: clusterEndpoint},
 		)
 	} else {
-		roleVal := provider
+		// Role TXT: prefer status.origin (bootstrapped/imported), fall back to
+		// spec.mode (bootstrap/import). Stale code read spec.infrastructure.provider.
+		roleVal, _, _ := unstructured.NestedString(obj.Object, "status", "origin")
+		if roleVal == "" {
+			roleVal, _, _ = unstructured.NestedString(obj.Object, "spec", "mode")
+		}
 		if roleVal == "" {
 			roleVal = "general"
 		}

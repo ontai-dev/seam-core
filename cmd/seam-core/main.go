@@ -123,6 +123,23 @@ func main() {
 		setupLog.Info("DSNS: seeded authority.conductor static record")
 	}
 
+	// Seed the static ns.seam.ontave.dev glue A record from the environment variable
+	// DSNS_SERVICE_IP. The SOA declares ns.seam.ontave.dev as the nameserver; without
+	// an A record CoreDNS cannot resolve its own nameserver and dig queries return no
+	// response. If absent, the record is skipped and a warning is logged.
+	// Inject DSNS_SERVICE_IP via the seam-core Deployment env vars.
+	// seam-core-schema.md §8 Decision 2 — zone authority.
+	if dsnsIP := os.Getenv("DSNS_SERVICE_IP"); dsnsIP != "" {
+		dsnsState.SetStaticRecord(idns.Record{
+			Name:  "ns",
+			Type:  idns.RecordTypeA,
+			Value: dsnsIP,
+		})
+		setupLog.Info("DSNS: seeded ns glue A record", "ip", dsnsIP)
+	} else {
+		setupLog.Info("DSNS: DSNS_SERVICE_IP not set — ns glue A record skipped; CoreDNS will not resolve ns.seam.ontave.dev and dig queries may return no response")
+	}
+
 	for _, gvk := range controller.DSNSGVKs {
 		r := &controller.DSNSReconciler{
 			Client: mgr.GetClient(),
