@@ -192,6 +192,14 @@ func (r *DSNSReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 	}
 
 	// Derive DNS records from the current object state.
+	// TalosCluster: log the cluster name and Ready status before derivation to aid
+	// diagnosis when the cluster is Ready but records are not appearing in the zone.
+	// The reconciler watches all namespaces and requires Ready=True to emit records.
+	if r.GVK.Kind == "TalosCluster" {
+		ready := hasConditionTrue(obj, "Ready")
+		logger.V(1).Info("reconciling TalosCluster DNS records",
+			"cluster", obj.GetName(), "namespace", obj.GetNamespace(), "ready", ready)
+	}
 	records := r.deriveRecords(obj)
 	r.State.UpdateRecords(ownerID, records)
 	if err := r.State.Apply(ctx, updateEvent(r.GVK, req, obj, records)); err != nil {
