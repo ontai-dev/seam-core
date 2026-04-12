@@ -663,6 +663,38 @@ func TestLineageReconciler_DeleteWithRoot_False_NoOwnerReference(t *testing.T) {
 	}
 }
 
+// TestLineageReconciler_ILIHasDomainRef verifies that a newly created
+// InfrastructureLineageIndex carries spec.domainRef set to the canonical
+// infrastructure domain reference. CLAUDE.md §14 Decision 2.
+func TestLineageReconciler_ILIHasDomainRef(t *testing.T) {
+	s := newTestScheme(t)
+	root := newRootDeclaration(talosClusterGVK, "dc-cluster", "ont-system")
+
+	fakeClient := fake.NewClientBuilder().WithScheme(s).
+		WithObjects(root).
+		WithStatusSubresource(root, &seamv1alpha1.InfrastructureLineageIndex{}).
+		Build()
+
+	r := &controller.LineageReconciler{
+		Client: fakeClient,
+		Scheme: s,
+		GVK:    talosClusterGVK,
+	}
+
+	reconcileRoot(t, r, "dc-cluster", "ont-system")
+
+	ili := &seamv1alpha1.InfrastructureLineageIndex{}
+	if err := fakeClient.Get(context.Background(),
+		client.ObjectKey{Name: "taloscluster-dc-cluster", Namespace: "ont-system"}, ili); err != nil {
+		t.Fatalf("get ILI: %v", err)
+	}
+
+	const want = "infrastructure.core.ontai.dev"
+	if ili.Spec.DomainRef != want {
+		t.Errorf("expected ILI spec.domainRef=%q, got %q", want, ili.Spec.DomainRef)
+	}
+}
+
 // TestLineageReconciler_ILINameDerivation verifies the deterministic ILI naming
 // convention for each GVK: lowercasekind-name.
 func TestLineageReconciler_ILINameDerivation(t *testing.T) {
