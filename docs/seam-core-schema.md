@@ -1,7 +1,7 @@
 # seam-core-schema
 > API Group: infrastructure.ontai.dev
 > Repository: seam-core
-> Layer: Seam Core — infrastructure domain instantiation of core.ontai.dev
+> Layer: Seam Core - infrastructure domain instantiation of core.ontai.dev
 > All agents read this before touching any seam-core CRD or shared library type.
 
 ---
@@ -14,16 +14,16 @@ No capability engine lives here. Seam Core installs CRD definitions and runs
 a schema controller that validates CRD schema versions.
 
 **Seam Core owns:**
-- `InfrastructureLineageIndex` — the infrastructure domain instantiation of
+- `InfrastructureLineageIndex` - the infrastructure domain instantiation of
   `DomainLineageIndex` from `core.ontai.dev`. Anchors the sealed causal chain
   for every root declaration managed by the Seam platform.
-- `RunnerConfig` — produced by Platform and Wrapper, reconciled by Conductor.
+- `RunnerConfig` - produced by Platform and Wrapper, reconciled by Conductor.
   Transfer from conductor shared library is a governed migration (SC-INV-002).
-- `InfrastructurePolicy` — produced by humans/guardian, reconciled by Guardian.
-- `InfrastructureProfile` — reconciled by Guardian.
-- The creation rationale enumeration (`pkg/lineage`) — a compile-time typed
+- `InfrastructurePolicy` - produced by humans/guardian, reconciled by Guardian.
+- `InfrastructureProfile` - reconciled by Guardian.
+- The creation rationale enumeration (`pkg/lineage`) - a compile-time typed
   constant set imported by all Seam Operators.
-- The `SealedCausalChain` field type (`pkg/lineage`) — embedded by every
+- The `SealedCausalChain` field type (`pkg/lineage`) - embedded by every
   Seam-managed CRD in its spec.
 
 **What Seam Core does NOT own:**
@@ -31,9 +31,9 @@ a schema controller that validates CRD schema versions.
 - Operator-specific admission logic.
 - Runtime or compile-mode execution.
 
-**SC-INV-001** — seam-core owns CRD definitions. Reconcilers live in the operator.
-**SC-INV-002** — RunnerConfig CRD transfer is a governed migration.
-**SC-INV-003** — seam-core installs before all operators.
+**SC-INV-001** - seam-core owns CRD definitions. Reconcilers live in the operator.
+**SC-INV-002** - RunnerConfig CRD transfer is a governed migration.
+**SC-INV-003** - seam-core installs before all operators.
 
 ---
 
@@ -46,13 +46,13 @@ applied in this domain are:
 | Constraint                        | Domain Core (abstract)                  | Seam Core (infrastructure instantiation)               |
 |-----------------------------------|-----------------------------------------|--------------------------------------------------------|
 | API group                         | core.ontai.dev                          | infrastructure.ontai.dev                               |
-| creationRationale constraint      | unconstrained string                    | enum — `pkg/lineage.CreationRationale` values          |
+| creationRationale constraint      | unconstrained string                    | enum - `pkg/lineage.CreationRationale` values          |
 | domainPolicyRef                   | string (abstract)                       | Name of an `InfrastructurePolicy` CR                   |
 | domainProfileRef                  | string (abstract)                       | Name of an `InfrastructureProfile` CR                  |
-| rootBinding fields                | as defined — unmodified                 | as defined — unmodified                                |
-| Lineage Index Pattern             | one index per root declaration          | one index per root declaration — unchanged             |
-| Authorship rule                   | controller-authored exclusively         | controller-authored exclusively — unchanged            |
-| Immutability rule                 | rootBinding sealed at admission         | rootBinding sealed at admission — unchanged            |
+| rootBinding fields                | as defined - unmodified                 | as defined - unmodified                                |
+| Lineage Index Pattern             | one index per root declaration          | one index per root declaration - unchanged             |
+| Authorship rule                   | controller-authored exclusively         | controller-authored exclusively - unchanged            |
+| Immutability rule                 | rootBinding sealed at admission         | rootBinding sealed at admission - unchanged            |
 
 ---
 
@@ -75,7 +75,7 @@ The index grows monotonically as new derived objects are created. Entries in
 ### 3.2 CRD Stub
 
 ```
-# STUB — infrastructure.ontai.dev/v1alpha1 InfrastructureLineageIndex
+# STUB - infrastructure.ontai.dev/v1alpha1 InfrastructureLineageIndex
 # Seam Core infrastructure domain instantiation of core.ontai.dev DomainLineageIndex.
 # controller-gen not yet wired for seam-core. Hand-authored stub pending wiring.
 ---
@@ -279,22 +279,22 @@ modifies this field after the object is created.
 The following are out of scope for the stub phase and must not be acted on
 without explicit Governor scheduling:
 
-- **LineageController** — the controller that manages `InfrastructureLineageIndex`
+- **LineageController** - the controller that manages `InfrastructureLineageIndex`
   CR lifecycle (create, append descendant entries, evaluate policy binding status).
   Requires a dedicated Controller Engineer session.
-- **Admission webhook immutability gate** — the webhook handler that rejects
+- **Admission webhook immutability gate** - the webhook handler that rejects
   updates modifying `spec.rootBinding` or `SealedCausalChain` fields.
   Requires a Guardian Controller Engineer session.
-- **RunnerConfig CRD ownership transfer** — from conductor shared library to
+- **RunnerConfig CRD ownership transfer** - from conductor shared library to
   seam-core. SC-INV-002. Requires Governor-scheduled migration session.
-- **controller-gen wiring for seam-core** — currently no code generation.
+- **controller-gen wiring for seam-core** - currently no code generation.
   The InfrastructureLineageIndex CRD YAML above is a hand-authored stub.
 
 ---
 
 ## 7. Lineage Provision Standards
 
-### Declaration 1 — core.ontai.dev is a contract and pattern layer exclusively
+### Declaration 1 - core.ontai.dev is a contract and pattern layer exclusively
 
 The `core.ontai.dev` API group is a contract and pattern layer exclusively. It
 defines abstract types and structural contracts that domain layers instantiate. It
@@ -307,7 +307,7 @@ Platform Governor constitutional amendment to change.
 
 ---
 
-### Declaration 2 — infrastructure.ontai.dev is the aggregation boundary for the Seam operator family
+### Declaration 2 - infrastructure.ontai.dev is the aggregation boundary for the Seam operator family
 
 Seam Core inherits `DomainLineageIndex` from `core.ontai.dev` and translates it
 into `InfrastructureLineageIndex` under `infrastructure.ontai.dev`. This extended
@@ -323,7 +323,7 @@ the sole controller that appends to `spec.descendantRegistry`, evaluates
 `spec.policyBindingStatus`, and reconciles lineage index state. No individual Seam
 Operator implements its own lineage aggregation controller.
 
-**Semantic data flow constraint — permanent:**
+**Semantic data flow constraint - permanent:**
 Semantic lineage data produced by Seam operators flows downward only. It originates
 at the operator layer, registers in `InfrastructureLineageIndex` at Seam Core, and
 is evaluated against `InfrastructurePolicy` and `InfrastructureProfile` at Seam Core.
@@ -333,7 +333,7 @@ operational history they have produced. This is a permanent, locked constraint.
 
 ---
 
-### Declaration 3 — Community domain pattern: contract and pattern from core, runtime from domain
+### Declaration 3 - Community domain pattern: contract and pattern from core, runtime from domain
 
 The community domain pattern is the standard composition model for any operator
 family adopting `DomainLineageIndex`. The `core.ontai.dev` layer provides two
@@ -354,20 +354,20 @@ the only allowed implementation.
 
 ---
 
-### Declaration 4 — Seam Core annotation namespace structure
+### Declaration 4 - Seam Core annotation namespace structure
 
 All annotations placed on Seam-managed CRs by Seam Operators follow a two-tier
 namespace structure under the `infrastructure.ontai.dev` prefix.
 
-**Tier 1 — operator-authored annotations:**
+**Tier 1 - operator-authored annotations:**
 Individual Seam Operators author annotations under the `infrastructure.ontai.dev`
 prefix for their own operational keys. Each operator retains full authorship
 authority over its own keys within this prefix. No cross-operator coordination is
 required for operator-specific annotation keys.
 
-**Tier 2 — governance sub-prefix (reserved):**
+**Tier 2 - governance sub-prefix (reserved):**
 The `governance.infrastructure.ontai.dev` sub-prefix is reserved exclusively for
-cross-cutting annotations written by controllers governed by Seam Core — specifically
+cross-cutting annotations written by controllers governed by Seam Core - specifically
 the `InfrastructureLineageController` and any future Seam Core governed controller.
 Individual Seam Operators never write annotations under the
 `governance.infrastructure.ontai.dev` sub-prefix on their own authority. Doing so
@@ -382,7 +382,7 @@ arbitrary operators.
 
 ---
 
-### Declaration 5 — Reserved LineageSynced condition type
+### Declaration 5 - Reserved LineageSynced condition type
 
 The condition type `LineageSynced` is reserved across all Seam Operator CRD status
 condition sets. No Seam Operator may define a condition of a different type for
@@ -415,13 +415,13 @@ It cannot be reversed without a Governor-scheduled migration session.
 
 ## 8. Domain Semantic Name Service
 
-> **Locked Governor Decision — 2026-04-06**
+> **Locked Governor Decision - 2026-04-06**
 > All six decisions in this section are locked. A Platform Governor constitutional
 > amendment is required to change any of them.
 
 ---
 
-### Decision 1 — DSNS is a controller within seam-core, not a separate binary or deployment
+### Decision 1 - DSNS is a controller within seam-core, not a separate binary or deployment
 
 DSNS (Domain Semantic Name Service) is implemented as a controller registered in
 `cmd/seam-core/main.go` alongside `LineageController`. It shares the existing
@@ -448,12 +448,12 @@ reconciler and without any operator importing a DSNS client package.
 
 **The boundary is permanent and locked:** Operators write CRDs. DSNS projects
 CRDs to DNS. No operator holds a dependency on DSNS. No operator calls DSNS APIs.
-This separation is enforced at the package boundary — DSNS is a consumer of CRD
+This separation is enforced at the package boundary - DSNS is a consumer of CRD
 state, not a shared library imported by operators.
 
 ---
 
-### Decision 2 — DNS backend is a ConfigMap named dsns-zone in ont-system
+### Decision 2 - DNS backend is a ConfigMap named dsns-zone in ont-system
 
 The DNS backend is a single ConfigMap named `dsns-zone` in `ont-system`. DSNS is
 the sole writer of this ConfigMap. Write exclusivity is enforced by an admission
@@ -471,11 +471,11 @@ is a standard RFC 1035 zone file generated by DSNSReconciler.
 
 ---
 
-### Decision 3 — Authoritative zone is seam.ontave.dev; CoreDNS delivery via compiler enable phase 5
+### Decision 3 - Authoritative zone is seam.ontave.dev; CoreDNS delivery via compiler enable phase 5
 
 The authoritative zone served by DSNS is `seam.ontave.dev`.
 
-The CoreDNS configuration is additive to the existing CoreDNS deployment — one new
+The CoreDNS configuration is additive to the existing CoreDNS deployment - one new
 Corefile stanza is added for the `seam.ontave.dev` zone, pointing at the mounted
 ConfigMap path. The existing CoreDNS stanzas are not modified.
 
@@ -497,12 +497,12 @@ before DNS records can be populated.
 
 ---
 
-### Decision 4 — DNS record schema
+### Decision 4 - DNS record schema
 
 All records are under the `seam.ontave.dev` zone. DSNSReconciler derives records
 from the nine watched GVKs with no operator involvement.
 
-**Platform records** — emitted when a `TalosCluster` reaches `Ready`:
+**Platform records** - emitted when a `TalosCluster` reaches `Ready`:
 
 | Record type | Name pattern | Value |
 |-------------|--------------|-------|
@@ -510,27 +510,27 @@ from the nine watched GVKs with no operator involvement.
 | A | `api.{cluster-name}.seam.ontave.dev` | API server endpoint |
 | TXT | `role.{cluster-name}.seam.ontave.dev` | Cluster role classification |
 
-**Guardian records** — emitted on condition transitions:
+**Guardian records** - emitted on condition transitions:
 
 | Record type | Name pattern | Value | Trigger |
 |-------------|--------------|-------|---------|
 | TXT | `identity.{subject-hash}.guardian.{cluster-name}.seam.ontave.dev` | RBACProfile name and IdentityProvider | IdentityBinding resolves |
 | TXT | `idp.{provider-name}.guardian.seam.ontave.dev` | OIDC discovery endpoint | IdentityProvider reaches Valid condition |
 
-**Wrapper records** — emitted on PackInstance completion:
+**Wrapper records** - emitted on PackInstance completion:
 
 | Record type | Name pattern | Value |
 |-------------|--------------|-------|
 | TXT | `pack.{pack-name}.{version}.wrapper.{cluster-name}.seam.ontave.dev` | PackReceipt digest |
 
-**Conductor records** — emitted from RunnerConfig terminal state:
+**Conductor records** - emitted from RunnerConfig terminal state:
 
 | Record type | Name pattern | Value |
 |-------------|--------------|-------|
 | TLSA-style TXT | `authority.conductor.seam.ontave.dev` | Management Conductor signing key fingerprint |
 | TXT | `run.{runnerconfig-name}.conductor.{cluster-name}.seam.ontave.dev` | Validation result digest |
 
-**Sovereign cluster delegation** — emitted when TalosCluster role classification is `sovereign`:
+**Sovereign cluster delegation** - emitted when TalosCluster role classification is `sovereign`:
 
 | Record type | Name pattern | Value |
 |-------------|--------------|-------|
@@ -543,11 +543,11 @@ delegated zone.
 
 ---
 
-### Decision 5 — Two runtime consumers with hard dependencies on DSNS availability
+### Decision 5 - Two runtime consumers with hard dependencies on DSNS availability
 
 Exactly two runtime components have hard dependencies on DSNS availability:
 
-**Conductor — tenant agent startup:**
+**Conductor - tenant agent startup:**
 At tenant cluster agent startup, Conductor queries `authority.conductor.seam.ontave.dev`
 to retrieve the management Conductor signing key fingerprint. This DNS lookup
 bootstraps signing key trust before the tenant Conductor establishes its federation
@@ -555,7 +555,7 @@ gRPC stream to the management cluster. If the record is absent or unreachable, t
 tenant Conductor enters a degraded state and retries. The federation stream is not
 established until the signing key fingerprint is confirmed.
 
-**Compiler — cluster coordinate discovery:**
+**Compiler - cluster coordinate discovery:**
 Compiler queries the `seam.ontave.dev` zone during cluster operations to discover
 cluster coordinates (VIP, API server endpoint, role) without requiring hardcoded
 kubeconfig paths or static configuration. Cluster coordinates are read from DNS at
@@ -567,5 +567,5 @@ are optional or best-effort.
 
 ---
 
-*seam-core-schema — Seam Core infrastructure domain*
+*seam-core-schema - Seam Core infrastructure domain*
 *This document is authored and amended by the Platform Governor and Schema Engineer only.*

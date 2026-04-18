@@ -1,6 +1,6 @@
 # seam-core
 
-**Seam Core — Cross-operator CRD definitions and shared library**
+**Seam Core - Cross-operator CRD definitions and shared library**
 **API Group:** `infrastructure.ontai.dev`
 
 ---
