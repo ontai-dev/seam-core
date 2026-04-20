@@ -10,30 +10,37 @@ jobs:
   ci:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout seam-core
         uses: actions/checkout@v4
+        with:
+          path: seam-core
 
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version-file: go.mod
+          go-version-file: seam-core/go.mod
           cache: true
 
       - name: Build
+        working-directory: seam-core
         run: make build
 
       - name: Lint
+        working-directory: seam-core
         run: |
           go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
           golangci-lint run ./...
 
       - name: Unit tests
+        working-directory: seam-core
         run: make test-unit
 
       - name: Integration tests
+        working-directory: seam-core
         run: make test-integration
 
       - name: e2e tests
+        working-directory: seam-core
         run: |
           E2E_OUT=$(go test ./test/e2e/... -v 2>&1 || true)
           SKIPPED=$(echo "$E2E_OUT" | grep -c '\[SKIPPED\]\|S\[' || echo 0)
