@@ -196,7 +196,16 @@ func (r *LineageReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 }
 
 // buildILI constructs a new InfrastructureLineageIndex from the root declaration.
+// It reads the infrastructure.ontai.dev/declaring-principal annotation from the
+// root declaration and populates rootBinding.declaringPrincipal. If the annotation
+// is absent (bootstrap window or pre-amendment object), declaringPrincipal is set
+// to "system:unknown". seam-core-schema.md §7 Declaration 6.
 func (r *LineageReconciler) buildILI(root *unstructured.Unstructured, iliName string) *seamv1alpha1.InfrastructureLineageIndex {
+	declaringPrincipal := root.GetAnnotations()["infrastructure.ontai.dev/declaring-principal"]
+	if declaringPrincipal == "" {
+		declaringPrincipal = "system:unknown"
+	}
+
 	return &seamv1alpha1.InfrastructureLineageIndex{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      iliName,
@@ -221,6 +230,7 @@ func (r *LineageReconciler) buildILI(root *unstructured.Unstructured, iliName st
 				RootNamespace:          root.GetNamespace(),
 				RootUID:                root.GetUID(),
 				RootObservedGeneration: root.GetGeneration(),
+				DeclaringPrincipal:     declaringPrincipal,
 			},
 			// DomainRef is the canonical traceability link from this infrastructure
 			// ILI to the abstract DomainLineageIndex at core.ontai.dev. All Seam
