@@ -39,6 +39,7 @@ const (
 	LabelRootILINamespace  = lineage.LabelRootILINamespace
 	LabelSeamOperator      = "infrastructure.ontai.dev/seam-operator"
 	LabelCreationRationale = "infrastructure.ontai.dev/creation-rationale"
+	LabelActorRef          = lineage.LabelActorRef
 )
 
 // DerivedObjectGVKs lists the derived-object GVKs that the DescendantReconciler
@@ -109,6 +110,15 @@ func (r *DescendantReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		}
 	}
 
+	// Resolve actorRef: prefer the ILI's rootBinding.declaringPrincipal (authoritative
+	// source written by LineageController from the declaring-principal annotation).
+	// Fall back to the label set by the operator at creation time for objects created
+	// before this amendment or during the bootstrap window. seam-core-schema.md §7 Declaration 6.
+	actorRef := ili.Spec.RootBinding.DeclaringPrincipal
+	if actorRef == "" {
+		actorRef = labels[LabelActorRef]
+	}
+
 	// Build the DescendantEntry from object metadata and labels.
 	now := metav1.Now()
 	entry := seamv1alpha1.DescendantEntry{
@@ -121,7 +131,8 @@ func (r *DescendantReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		SeamOperator:             labels[LabelSeamOperator],
 		CreationRationale:        lineage.CreationRationale(labels[LabelCreationRationale]),
 		RootGenerationAtCreation: obj.GetGeneration(),
-		RecordedAt:               &now,
+		CreatedAt:                &now,
+		ActorRef:                 actorRef,
 	}
 
 	// Append to DescendantRegistry via patch.
