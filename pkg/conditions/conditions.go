@@ -863,6 +863,18 @@ const (
 // Operator: wrapper (infra.ontai.dev), PackInstance CR.
 
 const (
+	// ConditionTypePackInstanceReady indicates the pack has been delivered and
+	// is in sync with the target cluster.
+	// Terminal state: True (delivered and in sync).
+	// Operators: wrapper (PackInstance).
+	ConditionTypePackInstanceReady = "Ready"
+
+	// ReasonAwaitingDelivery is set on Ready=False when no succeeded PackExecution
+	// has been found for this pack and cluster yet.
+	ReasonAwaitingDelivery = "AwaitingDelivery"
+)
+
+const (
 	// ConditionTypePackInstanceDependencyBlocked is set when a dependency PackInstance
 	// is drifted and the DependencyPolicy is Block.
 	// Terminal state: True (blocked; clears when dependency drift resolves).
