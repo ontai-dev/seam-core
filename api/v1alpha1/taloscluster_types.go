@@ -209,6 +209,7 @@ type InfrastructureTalosClusterStatus struct {
 // +kubebuilder:resource:scope=Namespaced,shortName=itc
 // +kubebuilder:printcolumn:name="Mode",type=string,JSONPath=".spec.mode"
 // +kubebuilder:printcolumn:name="Role",type=string,JSONPath=".spec.role"
+// +kubebuilder:printcolumn:name="Ready",type=string,JSONPath=".status.conditions[?(@.type==\"Ready\")].status"
 // +kubebuilder:printcolumn:name="Age",type=date,JSONPath=".metadata.creationTimestamp"
 
 // InfrastructureTalosCluster is the seam-core CRD for a Talos cluster under Seam governance.
