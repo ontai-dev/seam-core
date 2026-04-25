@@ -264,6 +264,18 @@ spec:
                   - type
                   type: object
                 type: array
+              failedStep:
+                description: |-
+                  FailedStep is the name of the first step that reached the Failed phase.
+                  Present only when Phase="Failed". conductor-schema.md §17.
+                type: string
+              phase:
+                description: |-
+                  Phase is the terminal execution phase written by Conductor execute mode.
+                  "Completed" means all steps succeeded. "Failed" means at least one step failed.
+                  Empty means execution is in progress. Platform operators watch this field to
+                  detect terminal conditions without scanning StepResults. conductor-schema.md §17.
+                type: string
               stepResults:
                 description: StepResults is the ordered list of step result records
                   written by Conductor execute mode.

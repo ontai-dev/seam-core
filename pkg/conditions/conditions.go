@@ -596,6 +596,45 @@ const (
 	ReasonConductorDeploymentUnavailable = "ConductorDeploymentUnavailable"
 )
 
+const (
+	// ConditionTypeBootstrapped indicates whether the bootstrap or import phase has
+	// completed. True means the operation succeeded. False means in progress or failed.
+	// Replaces the confusing Bootstrapping=False-means-complete pattern.
+	// Operators: platform (TalosCluster).
+	ConditionTypeBootstrapped = "Bootstrapped"
+
+	// ConditionTypeScreenProviderNotImplemented is set when
+	// spec.infrastructureProvider=screen is observed. Screen is a future operator
+	// (INV-021). The reconciler halts without further reconciliation until Screen is
+	// implemented. Clears when Screen support is added.
+	// Operators: platform (TalosCluster).
+	ConditionTypeScreenProviderNotImplemented = "ScreenProviderNotImplemented"
+
+	// ConditionTypePhaseFailed is set when a required field is missing or invalid
+	// and reconciliation cannot proceed. The reason encodes the specific cause.
+	// Operators: platform (TalosCluster).
+	ConditionTypePhaseFailed = "PhaseFailed"
+
+	// ConditionTypeKubeconfigUnavailable is set on the import path when a kubeconfig
+	// Secret cannot be generated because a prerequisite resource is absent.
+	// Clears when the kubeconfig Secret is successfully written to seam-system.
+	// Operators: platform (TalosCluster).
+	ConditionTypeKubeconfigUnavailable = "KubeconfigUnavailable"
+
+	// ReasonScreenNotImplemented is set on ScreenProviderNotImplemented=True when
+	// spec.infrastructureProvider=screen is observed. INV-021.
+	ReasonScreenNotImplemented = "ScreenNotImplemented"
+
+	// ReasonTalosVersionRequired is set on PhaseFailed=True when spec.talosVersion is
+	// empty and a RunnerConfig cannot be created without a version-tagged conductor image.
+	// conductor-schema.md §3, INV-012.
+	ReasonTalosVersionRequired = "TalosVersionRequired"
+
+	// ReasonTalosConfigSecretAbsent is set on KubeconfigUnavailable=True when the
+	// talosconfig Secret is not found in seam-system. Clears when the Secret appears.
+	ReasonTalosConfigSecretAbsent = "TalosConfigSecretAbsent"
+)
+
 // ─── Platform — ClusterMaintenance conditions ────────────────────────────────
 
 const (

@@ -25,10 +25,111 @@ const (
 	InfrastructureTalosClusterRoleTenant     InfrastructureTalosClusterRole = "tenant"
 )
 
-// InfrastructureCAPIConfig holds CAPI integration settings.
+// InfrastructureTalosClusterOrigin records how the cluster came to exist.
+// +kubebuilder:validation:Enum=bootstrapped;imported
+type InfrastructureTalosClusterOrigin string
+
+const (
+	InfrastructureTalosClusterOriginBootstrapped InfrastructureTalosClusterOrigin = "bootstrapped"
+	InfrastructureTalosClusterOriginImported     InfrastructureTalosClusterOrigin = "imported"
+)
+
+// InfrastructureProvider declares the infrastructure provider backing a TalosCluster.
+// +kubebuilder:validation:Enum=native;capi;screen
+type InfrastructureProvider string
+
+const (
+	// InfrastructureProviderNative is the default provider. The operator manages
+	// cluster lifecycle directly: management cluster via a bootstrap Conductor Job
+	// (capi.enabled=false), target clusters via the CAPI path (capi.enabled=true).
+	InfrastructureProviderNative InfrastructureProvider = "native"
+
+	// InfrastructureProviderCAPI is an explicit alias for the CAPI-backed target
+	// cluster path. Functionally equivalent to InfrastructureProviderNative when
+	// spec.capi.enabled=true. Reserved for future explicit-provider semantics.
+	InfrastructureProviderCAPI InfrastructureProvider = "capi"
+
+	// InfrastructureProviderScreen is reserved for the future Screen operator (INV-021).
+	// No implementation until a Governor-approved ADR. When observed, the reconciler
+	// sets ScreenProviderNotImplemented=True and halts.
+	InfrastructureProviderScreen InfrastructureProvider = "screen"
+)
+
+// InfrastructureLocalObjectRef is a reference to a Kubernetes object by name and namespace.
+type InfrastructureLocalObjectRef struct {
+	// Name is the object name.
+	Name string `json:"name"`
+
+	// Namespace is the object namespace. May be empty for cluster-scoped objects.
+	// +optional
+	Namespace string `json:"namespace,omitempty"`
+}
+
+// InfrastructureCAPICiliumPackRef is a reference to the cluster-specific Cilium ClusterPack.
+// The pack is pre-compiled on the workstation and is cluster-endpoint-specific.
+// platform-schema.md §2.3.
+type InfrastructureCAPICiliumPackRef struct {
+	// Name is the ClusterPack CR name for the Cilium pack.
+	Name string `json:"name"`
+
+	// Version is the ClusterPack version string.
+	Version string `json:"version"`
+}
+
+// InfrastructureCAPIWorkerPool declares a worker node pool for a CAPI-managed target cluster.
+// Each pool maps to a MachineDeployment + SeamInfrastructureMachineTemplate.
+type InfrastructureCAPIWorkerPool struct {
+	// Name is the pool identifier. Used as the MachineDeployment name suffix.
+	Name string `json:"name"`
+
+	// Replicas is the desired number of worker nodes in this pool.
+	// +optional
+	Replicas int32 `json:"replicas,omitempty"`
+
+	// SeamInfrastructureMachineNames lists the SeamInfrastructureMachine CR names
+	// pre-provisioned for this pool. One per node.
+	// +optional
+	SeamInfrastructureMachineNames []string `json:"seamInfrastructureMachineNames,omitempty"`
+}
+
+// InfrastructureCAPIControlPlaneConfig declares the control plane configuration for a CAPI
+// target cluster.
+type InfrastructureCAPIControlPlaneConfig struct {
+	// Replicas is the desired number of control plane nodes.
+	// +optional
+	Replicas int32 `json:"replicas,omitempty"`
+}
+
+// InfrastructureCAPIConfig holds CAPI integration settings for a target cluster.
+// Only consulted when capi.enabled=true. platform-schema.md §5.
 type InfrastructureCAPIConfig struct {
-	// Enabled controls whether CAPI manages the cluster lifecycle.
+	// Enabled determines whether this TalosCluster uses the CAPI path.
+	// True for all target clusters. False for the management cluster.
 	Enabled bool `json:"enabled"`
+
+	// TalosVersion is the Talos version to use for TalosConfigTemplate and
+	// CABPT machineconfig generation. Required when Enabled=true.
+	// +optional
+	TalosVersion string `json:"talosVersion,omitempty"`
+
+	// KubernetesVersion is the Kubernetes version for TalosControlPlane.
+	// Required when Enabled=true.
+	// +optional
+	KubernetesVersion string `json:"kubernetesVersion,omitempty"`
+
+	// ControlPlane holds control plane configuration. Required when Enabled=true.
+	// +optional
+	ControlPlane *InfrastructureCAPIControlPlaneConfig `json:"controlPlane,omitempty"`
+
+	// Workers is the list of worker node pools.
+	// +optional
+	Workers []InfrastructureCAPIWorkerPool `json:"workers,omitempty"`
+
+	// CiliumPackRef references the cluster-specific Cilium ClusterPack.
+	// Applied as the first pack after the CAPI cluster reaches Running state.
+	// Required when Enabled=true. platform-schema.md §2.3.
+	// +optional
+	CiliumPackRef *InfrastructureCAPICiliumPackRef `json:"ciliumPackRef,omitempty"`
 }
 
 // InfrastructureTalosClusterSpec is the declared desired state of an InfrastructureTalosCluster.
@@ -48,16 +149,29 @@ type InfrastructureTalosClusterSpec struct {
 	// +optional
 	TalosVersion string `json:"talosVersion,omitempty"`
 
+	// ClusterEndpoint is the cluster VIP or primary API endpoint IP. Required on mode=import.
+	// Optional for bootstrap mode (endpoint derived from bootstrap Job output).
+	// +optional
+	ClusterEndpoint string `json:"clusterEndpoint,omitempty"`
+
+	// NodeAddresses is the list of node IPs belonging to this cluster. Used by
+	// DSNSReconciler to populate A records in the seam DNS zone. platform-schema.md §5.
+	// +optional
+	NodeAddresses []string `json:"nodeAddresses,omitempty"`
+
 	// CAPI holds CAPI integration settings. When absent, the cluster uses direct bootstrap.
 	// +optional
 	CAPI *InfrastructureCAPIConfig `json:"capi,omitempty"`
 
-	// Endpoint is the API server endpoint for this cluster. Required on mode=import.
+	// InfrastructureProvider declares the infrastructure provider backing this cluster.
+	// Defaults to native when absent. The only reserved future value is screen (INV-021).
+	// +kubebuilder:validation:Enum=native;capi;screen
+	// +kubebuilder:default=native
 	// +optional
-	Endpoint string `json:"endpoint,omitempty"`
+	InfrastructureProvider InfrastructureProvider `json:"infrastructureProvider,omitempty"`
 
 	// KubeconfigSecretRef is the name of the Secret containing the kubeconfig for this cluster.
-	// Required on mode=import.
+	// Required on mode=import. Not used when CAPI manages the cluster lifecycle.
 	// +optional
 	KubeconfigSecretRef string `json:"kubeconfigSecretRef,omitempty"`
 
@@ -72,13 +186,18 @@ type InfrastructureTalosClusterSpec struct {
 
 // InfrastructureTalosClusterStatus is the observed state of an InfrastructureTalosCluster.
 type InfrastructureTalosClusterStatus struct {
-	// Origin records how this cluster came under Seam governance: "imported" or "bootstrapped".
-	// +optional
-	Origin string `json:"origin,omitempty"`
-
 	// ObservedGeneration is the generation most recently reconciled.
 	// +optional
 	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
+
+	// Origin records how this cluster came under Seam governance.
+	// +optional
+	Origin InfrastructureTalosClusterOrigin `json:"origin,omitempty"`
+
+	// CAPIClusterRef is a reference to the owned CAPI Cluster object in the tenant
+	// namespace. Only set for CAPI-managed clusters (capi.enabled=true).
+	// +optional
+	CAPIClusterRef *InfrastructureLocalObjectRef `json:"capiClusterRef,omitempty"`
 
 	// Conditions is the list of status conditions for this TalosCluster.
 	// +optional

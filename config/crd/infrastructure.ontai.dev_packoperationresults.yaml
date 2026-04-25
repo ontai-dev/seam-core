@@ -175,6 +175,18 @@ spec:
                 description: Phase identifies the RunnerConfig phase this result belongs
                   to.
                 type: string
+              previousRevisionRef:
+                description: |-
+                  PreviousRevisionRef is the name of the PackOperationResult CR deleted when
+                  this revision was written. Enables chain reconstruction for the full operation history.
+                  Absent for revision 1 (no predecessor).
+                type: string
+              revision:
+                description: |-
+                  Revision is the monotonically increasing revision counter for this pack operation
+                  sequence. Incremented each time a new result supersedes the previous one.
+                format: int64
+                type: integer
               startedAt:
                 description: StartedAt is the time the capability execution began.
                 format: date-time
@@ -227,6 +239,11 @@ spec:
                   - status
                   type: object
                 type: array
+              talosClusterOperationResultRef:
+                description: |-
+                  TalosClusterOperationResultRef is reserved for future cross-reference to a
+                  TalosCluster-scoped OperationResult. Stub field; not populated by any current controller.
+                type: string
               targetClusterRef:
                 description: TargetClusterRef is the name of the target cluster this
                   operation ran against.

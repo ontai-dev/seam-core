@@ -59,21 +59,102 @@ spec:
                 description: CAPI holds CAPI integration settings. When absent, the
                   cluster uses direct bootstrap.
                 properties:
+                  ciliumPackRef:
+                    description: |-
+                      CiliumPackRef references the cluster-specific Cilium ClusterPack.
+                      Applied as the first pack after the CAPI cluster reaches Running state.
+                      Required when Enabled=true. platform-schema.md §2.3.
+                    properties:
+                      name:
+                        description: Name is the ClusterPack CR name for the Cilium
+                          pack.
+                        type: string
+                      version:
+                        description: Version is the ClusterPack version string.
+                        type: string
+                    required:
+                    - name
+                    - version
+                    type: object
+                  controlPlane:
+                    description: ControlPlane holds control plane configuration. Required
+                      when Enabled=true.
+                    properties:
+                      replicas:
+                        description: Replicas is the desired number of control plane
+                          nodes.
+                        format: int32
+                        type: integer
+                    type: object
                   enabled:
-                    description: Enabled controls whether CAPI manages the cluster
-                      lifecycle.
+                    description: |-
+                      Enabled determines whether this TalosCluster uses the CAPI path.
+                      True for all target clusters. False for the management cluster.
                     type: boolean
+                  kubernetesVersion:
+                    description: |-
+                      KubernetesVersion is the Kubernetes version for TalosControlPlane.
+                      Required when Enabled=true.
+                    type: string
+                  talosVersion:
+                    description: |-
+                      TalosVersion is the Talos version to use for TalosConfigTemplate and
+                      CABPT machineconfig generation. Required when Enabled=true.
+                    type: string
+                  workers:
+                    description: Workers is the list of worker node pools.
+                    items:
+                      description: |-
+                        InfrastructureCAPIWorkerPool declares a worker node pool for a CAPI-managed target cluster.
+                        Each pool maps to a MachineDeployment + SeamInfrastructureMachineTemplate.
+                      properties:
+                        name:
+                          description: Name is the pool identifier. Used as the MachineDeployment
+                            name suffix.
+                          type: string
+                        replicas:
+                          description: Replicas is the desired number of worker nodes
+                            in this pool.
+                          format: int32
+                          type: integer
+                        seamInfrastructureMachineNames:
+                          description: |-
+                            SeamInfrastructureMachineNames lists the SeamInfrastructureMachine CR names
+                            pre-provisioned for this pool. One per node.
+                          items:
+                            type: string
+                          type: array
+                      required:
+                      - name
+                      type: object
+                    type: array
                 required:
                 - enabled
                 type: object
-              endpoint:
-                description: Endpoint is the API server endpoint for this cluster.
-                  Required on mode=import.
+              clusterEndpoint:
+                description: |-
+                  ClusterEndpoint is the cluster VIP or primary API endpoint IP. Required on mode=import.
+                  Optional for bootstrap mode (endpoint derived from bootstrap Job output).
+                type: string
+              infrastructureProvider:
+                allOf:
+                - enum:
+                  - native
+                  - capi
+                  - screen
+                - enum:
+                  - native
+                  - capi
+                  - screen
+                default: native
+                description: |-
+                  InfrastructureProvider declares the infrastructure provider backing this cluster.
+                  Defaults to native when absent. The only reserved future value is screen (INV-021).
                 type: string
               kubeconfigSecretRef:
                 description: |-
                   KubeconfigSecretRef is the name of the Secret containing the kubeconfig for this cluster.
-                  Required on mode=import.
+                  Required on mode=import. Not used when CAPI manages the cluster lifecycle.
                 type: string
               lineage:
                 description: Lineage is the sealed causal chain record for this root
@@ -157,6 +238,13 @@ spec:
                 description: Mode declares whether this cluster is bootstrapped from
                   scratch or imported.
                 type: string
+              nodeAddresses:
+                description: |-
+                  NodeAddresses is the list of node IPs belonging to this cluster. Used by
+                  DSNSReconciler to populate A records in the seam DNS zone. platform-schema.md §5.
+                items:
+                  type: string
+                type: array
               role:
                 allOf:
                 - enum:
@@ -184,6 +272,21 @@ spec:
             description: InfrastructureTalosClusterStatus is the observed state of
               an InfrastructureTalosCluster.
             properties:
+              capiClusterRef:
+                description: |-
+                  CAPIClusterRef is a reference to the owned CAPI Cluster object in the tenant
+                  namespace. Only set for CAPI-managed clusters (capi.enabled=true).
+                properties:
+                  name:
+                    description: Name is the object name.
+                    type: string
+                  namespace:
+                    description: Namespace is the object namespace. May be empty for
+                      cluster-scoped objects.
+                    type: string
+                required:
+                - name
+                type: object
               conditions:
                 description: Conditions is the list of status conditions for this
                   TalosCluster.
@@ -247,8 +350,10 @@ spec:
                 format: int64
                 type: integer
               origin:
-                description: 'Origin records how this cluster came under Seam governance:
-                  "imported" or "bootstrapped".'
+                description: Origin records how this cluster came under Seam governance.
+                enum:
+                - bootstrapped
+                - imported
                 type: string
             type: object
         type: object

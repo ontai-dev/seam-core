@@ -71,9 +71,20 @@ spec:
                   instance tracks.
                 type: string
               dependencyPolicy:
-                description: DependencyPolicy controls how dependency failures affect
-                  this instance.
-                type: string
+                description: DependencyPolicy defines behavior when a dependency reports
+                  drift.
+                properties:
+                  onDrift:
+                    default: Warn
+                    description: |-
+                      OnDrift controls how this PackInstance responds when a declared dependency
+                      PackInstance reports Drifted=True.
+                    enum:
+                    - Block
+                    - Warn
+                    - Ignore
+                    type: string
+                type: object
               dependsOn:
                 description: DependsOn is the list of pack base names that must be
                   Delivered before this instance.
@@ -158,10 +169,60 @@ spec:
                   - type
                   type: object
                 type: array
+              deliveredAt:
+                description: DeliveredAt records when the pack was most recently confirmed
+                  delivered.
+                format: date-time
+                type: string
+              deployedResources:
+                description: |-
+                  DeployedResources is the list of Kubernetes resources applied by the pack-deploy job.
+                  Used by the PackInstance deletion handler for cleanup.
+                items:
+                  description: |-
+                    InfrastructureDeployedResourceRef records a single Kubernetes resource applied
+                    by the pack-deploy job. Used by the PackInstance deletion handler to clean up
+                    deployed workload when the ClusterPack is deleted. wrapper-schema.md §3.
+                  properties:
+                    apiVersion:
+                      description: APIVersion is the Kubernetes apiVersion (e.g.,
+                        apps/v1, v1).
+                      type: string
+                    kind:
+                      description: Kind is the Kubernetes resource Kind (e.g., Deployment,
+                        Namespace).
+                      type: string
+                    name:
+                      description: Name is the resource name.
+                      type: string
+                    namespace:
+                      description: Namespace is the resource namespace. Empty for
+                        cluster-scoped resources.
+                      type: string
+                  required:
+                  - apiVersion
+                  - kind
+                  - name
+                  type: object
+                type: array
+              driftSummary:
+                description: DriftSummary is a human-readable summary of the current
+                  drift state.
+                type: string
               observedGeneration:
                 description: ObservedGeneration is the generation most recently reconciled.
                 format: int64
                 type: integer
+              upgradeDirection:
+                description: |-
+                  UpgradeDirection records the version transition direction for the last deployment.
+                  Initial: first deployment. Upgrade: newer version. Rollback: older version. Redeploy: same version.
+                enum:
+                - Initial
+                - Upgrade
+                - Rollback
+                - Redeploy
+                type: string
             type: object
         type: object
     served: true

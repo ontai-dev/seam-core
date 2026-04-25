@@ -153,6 +153,18 @@ type InfrastructureRunnerConfigStatus struct {
 	// +optional
 	AgentLeader string `json:"agentLeader,omitempty"`
 
+	// Phase is the terminal execution phase written by Conductor execute mode.
+	// "Completed" means all steps succeeded. "Failed" means at least one step failed.
+	// Empty means execution is in progress. Platform operators watch this field to
+	// detect terminal conditions without scanning StepResults. conductor-schema.md §17.
+	// +optional
+	Phase string `json:"phase,omitempty"`
+
+	// FailedStep is the name of the first step that reached the Failed phase.
+	// Present only when Phase="Failed". conductor-schema.md §17.
+	// +optional
+	FailedStep string `json:"failedStep,omitempty"`
+
 	// StepResults is the ordered list of step result records written by Conductor execute mode.
 	// +optional
 	StepResults []RunnerConfigStepResult `json:"stepResults,omitempty"`

@@ -301,7 +301,7 @@ func TestInfrastructureTalosCluster_ImportRoleRequired(t *testing.T) {
 		Spec: v1alpha1.InfrastructureTalosClusterSpec{
 			Mode:     v1alpha1.InfrastructureTalosClusterModeImport,
 			Role:     v1alpha1.InfrastructureTalosClusterRoleManagement,
-			Endpoint: "https://10.20.0.10:6443",
+			ClusterEndpoint: "https://10.20.0.10:6443",
 		},
 	}
 	if tc.Spec.Role == "" {
