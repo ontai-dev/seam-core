@@ -62,13 +62,13 @@ const InfrastructureDomainRef = "infrastructure.core.ontai.dev"
 //
 // CLAUDE.md §14 Decision 4 — one index per root declaration across all operators.
 var RootDeclarationGVKs = []schema.GroupVersionKind{
-	// Platform operator — platform.ontai.dev
-	{Group: "platform.ontai.dev", Version: "v1alpha1", Kind: "TalosCluster"},
+	// Platform operator — infrastructure.ontai.dev (Decision G)
+	{Group: "infrastructure.ontai.dev", Version: "v1alpha1", Kind: "InfrastructureTalosCluster"},
 
-	// Wrapper operator — infra.ontai.dev
-	{Group: "infra.ontai.dev", Version: "v1alpha1", Kind: "ClusterPack"},
-	{Group: "infra.ontai.dev", Version: "v1alpha1", Kind: "PackExecution"},
-	{Group: "infra.ontai.dev", Version: "v1alpha1", Kind: "PackInstance"},
+	// Wrapper operator — infrastructure.ontai.dev (Decision G)
+	{Group: "infrastructure.ontai.dev", Version: "v1alpha1", Kind: "InfrastructureClusterPack"},
+	{Group: "infrastructure.ontai.dev", Version: "v1alpha1", Kind: "InfrastructurePackExecution"},
+	{Group: "infrastructure.ontai.dev", Version: "v1alpha1", Kind: "InfrastructurePackInstance"},
 
 	// Guardian operator — security.ontai.dev
 	{Group: "security.ontai.dev", Version: "v1alpha1", Kind: "RBACPolicy"},

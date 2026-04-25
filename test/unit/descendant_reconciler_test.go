@@ -18,9 +18,9 @@ import (
 )
 
 var runnerConfigGVK = schema.GroupVersionKind{
-	Group:   "runner.ontai.dev",
+	Group:   "infrastructure.ontai.dev",
 	Version: "v1alpha1",
-	Kind:    "RunnerConfig",
+	Kind:    "InfrastructureRunnerConfig",
 }
 
 // newRunnerConfig builds a minimal unstructured RunnerConfig with descendant labels.
@@ -122,8 +122,8 @@ func TestDescendantReconciler_AppendsEntryToILI(t *testing.T) {
 	}
 
 	entry := got.Spec.DescendantRegistry[0]
-	if entry.Kind != "RunnerConfig" {
-		t.Errorf("entry.Kind = %q, want RunnerConfig", entry.Kind)
+	if entry.Kind != "InfrastructureRunnerConfig" {
+		t.Errorf("entry.Kind = %q, want InfrastructureRunnerConfig", entry.Kind)
 	}
 	if entry.Name != "rc-etcd-001" {
 		t.Errorf("entry.Name = %q, want rc-etcd-001", entry.Name)

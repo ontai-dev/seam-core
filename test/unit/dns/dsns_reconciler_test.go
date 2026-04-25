@@ -18,11 +18,11 @@ import (
 // ── test helpers ──────────────────────────────────────────────────────────────
 
 var (
-	talosClusterGVK   = schema.GroupVersionKind{Group: "platform.ontai.dev", Version: "v1alpha1", Kind: "TalosCluster"}
+	talosClusterGVK   = schema.GroupVersionKind{Group: "infrastructure.ontai.dev", Version: "v1alpha1", Kind: "InfrastructureTalosCluster"}
 	identityBindGVK   = schema.GroupVersionKind{Group: "security.ontai.dev", Version: "v1alpha1", Kind: "IdentityBinding"}
 	identityProvGVK   = schema.GroupVersionKind{Group: "security.ontai.dev", Version: "v1alpha1", Kind: "IdentityProvider"}
-	packInstanceGVK   = schema.GroupVersionKind{Group: "infra.ontai.dev", Version: "v1alpha1", Kind: "PackInstance"}
-	runnerConfigGVK   = schema.GroupVersionKind{Group: "runner.ontai.dev", Version: "v1alpha1", Kind: "RunnerConfig"}
+	packInstanceGVK   = schema.GroupVersionKind{Group: "infrastructure.ontai.dev", Version: "v1alpha1", Kind: "InfrastructurePackInstance"}
+	runnerConfigGVK   = schema.GroupVersionKind{Group: "infrastructure.ontai.dev", Version: "v1alpha1", Kind: "InfrastructureRunnerConfig"}
 )
 
 func newUnstructured(gvk schema.GroupVersionKind, name, ns string) *unstructured.Unstructured {

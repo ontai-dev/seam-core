@@ -57,13 +57,13 @@ func TestAC4_LineageReconciler_CreatesILIWithDeterministicName(t *testing.T) {
 
 	ili := &seamv1alpha1.InfrastructureLineageIndex{}
 	if err := c.Get(context.Background(), client.ObjectKey{
-		Name:      "taloscluster-prod-cluster",
+		Name:      "infrastructuretaloscluster-prod-cluster",
 		Namespace: "seam-system",
 	}, ili); err != nil {
-		t.Fatalf("AC-4: InfrastructureLineageIndex taloscluster-prod-cluster not found: %v", err)
+		t.Fatalf("AC-4: InfrastructureLineageIndex infrastructuretaloscluster-prod-cluster not found: %v", err)
 	}
-	if ili.Spec.RootBinding.RootKind != "TalosCluster" {
-		t.Errorf("AC-4: ILI rootBinding.rootKind = %q, want TalosCluster", ili.Spec.RootBinding.RootKind)
+	if ili.Spec.RootBinding.RootKind != "InfrastructureTalosCluster" {
+		t.Errorf("AC-4: ILI rootBinding.rootKind = %q, want InfrastructureTalosCluster", ili.Spec.RootBinding.RootKind)
 	}
 	if ili.Spec.RootBinding.RootName != "prod-cluster" {
 		t.Errorf("AC-4: ILI rootBinding.rootName = %q, want prod-cluster", ili.Spec.RootBinding.RootName)
@@ -168,12 +168,12 @@ func TestAC4_LineageReconciler_Idempotent(t *testing.T) {
 // AC-4 gate: GVK coverage contract. seam-core-schema.md §3.
 func TestAC4_AllNineRootDeclarationGVKsAreRegistered(t *testing.T) {
 	required := []schema.GroupVersionKind{
-		// Platform
-		{Group: "platform.ontai.dev", Version: "v1alpha1", Kind: "TalosCluster"},
-		// Wrapper
-		{Group: "infra.ontai.dev", Version: "v1alpha1", Kind: "ClusterPack"},
-		{Group: "infra.ontai.dev", Version: "v1alpha1", Kind: "PackExecution"},
-		{Group: "infra.ontai.dev", Version: "v1alpha1", Kind: "PackInstance"},
+		// Platform — infrastructure.ontai.dev (Decision G)
+		{Group: "infrastructure.ontai.dev", Version: "v1alpha1", Kind: "InfrastructureTalosCluster"},
+		// Wrapper — infrastructure.ontai.dev (Decision G)
+		{Group: "infrastructure.ontai.dev", Version: "v1alpha1", Kind: "InfrastructureClusterPack"},
+		{Group: "infrastructure.ontai.dev", Version: "v1alpha1", Kind: "InfrastructurePackExecution"},
+		{Group: "infrastructure.ontai.dev", Version: "v1alpha1", Kind: "InfrastructurePackInstance"},
 		// Guardian
 		{Group: "security.ontai.dev", Version: "v1alpha1", Kind: "RBACPolicy"},
 		{Group: "security.ontai.dev", Version: "v1alpha1", Kind: "RBACProfile"},

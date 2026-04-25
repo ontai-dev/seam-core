@@ -46,8 +46,8 @@ const (
 // watches. Operators set LabelRootILI on objects of these kinds at creation time.
 // One DescendantReconciler instance is registered per GVK in main.go.
 var DerivedObjectGVKs = []schema.GroupVersionKind{
-	{Group: "runner.ontai.dev", Version: "v1alpha1", Kind: "RunnerConfig"},
-	{Group: "infra.ontai.dev", Version: "v1alpha1", Kind: "PackInstance"},
+	{Group: "infrastructure.ontai.dev", Version: "v1alpha1", Kind: "InfrastructureRunnerConfig"},
+	{Group: "infrastructure.ontai.dev", Version: "v1alpha1", Kind: "InfrastructurePackInstance"},
 }
 
 // DescendantReconciler watches a single derived-object GVK and appends
