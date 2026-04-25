@@ -115,6 +115,13 @@ type InfrastructureClusterPackSpec struct {
 	// +optional
 	HelmVersion string `json:"helmVersion,omitempty"`
 
+	// ValuesFile is the path to the values file used during pack compilation.
+	// For Helm packs: the user-supplied values file merged with chart defaults at render time.
+	// For kustomize/raw packs: the overlay or patch file applied during the external build.
+	// Informational -- recorded so admins can trace which customization produced this artifact.
+	// +optional
+	ValuesFile string `json:"valuesFile,omitempty"`
+
 	// LifecyclePolicies controls artifact retention behavior.
 	// +optional
 	LifecyclePolicies *InfrastructureLifecyclePolicy `json:"lifecyclePolicies,omitempty"`
