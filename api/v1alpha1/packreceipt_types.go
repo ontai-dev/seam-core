@@ -24,23 +24,23 @@ type PackReceiptDeployedResource struct {
 }
 
 // InfrastructurePackReceiptSpec defines the desired state of an InfrastructurePackReceipt.
-// Written by conductor-execute on the tenant cluster immediately after manifest apply.
-// Verified and reconciled by conductor agent role=tenant. INV-026. conductor-schema.md.
+// Written by the packinstance pull loop on the tenant cluster conductor after
+// Ed25519 signature verification. INV-026. conductor-schema.md.
 type InfrastructurePackReceiptSpec struct {
+	// PackInstanceRef is the name of the PackInstance CR this receipt acknowledges.
+	// +optional
+	PackInstanceRef string `json:"packInstanceRef,omitempty"`
+
+	// SignatureRef is the name of the signed artifact Secret on the management cluster
+	// (seam-pack-signed-{cluster}-{packInstance}) from which this receipt was derived.
+	// +optional
+	SignatureRef string `json:"signatureRef,omitempty"`
+
 	// ClusterPackRef is the name of the ClusterPack CR this receipt acknowledges.
 	ClusterPackRef string `json:"clusterPackRef"`
 
 	// TargetClusterRef is the name of the cluster this receipt was generated on.
 	TargetClusterRef string `json:"targetClusterRef"`
-
-	// PackSignature is the base64-encoded Ed25519 signature from the management cluster conductor.
-	// INV-026.
-	// +optional
-	PackSignature string `json:"packSignature,omitempty"`
-
-	// SignatureVerified indicates whether the conductor agent verified the pack signature.
-	// +optional
-	SignatureVerified bool `json:"signatureVerified,omitempty"`
 
 	// RBACDigest is the OCI digest of the RBAC layer. Carried from ClusterPack for audit.
 	// +optional
@@ -75,7 +75,23 @@ type InfrastructurePackReceiptSpec struct {
 }
 
 // InfrastructurePackReceiptStatus is the observed state of an InfrastructurePackReceipt.
+// Written by the packinstance pull loop after signature verification. INV-026.
 type InfrastructurePackReceiptStatus struct {
+	// Verified indicates whether the Ed25519 signature on the PackInstance artifact
+	// was successfully verified against the management cluster's public key. INV-026.
+	// +optional
+	Verified bool `json:"verified,omitempty"`
+
+	// Signature is the base64-encoded Ed25519 signature from the signed artifact Secret.
+	// Stored for auditability and idempotency checking. INV-026.
+	// +optional
+	Signature string `json:"signature,omitempty"`
+
+	// VerificationFailedReason is set when Verified=false and describes the
+	// specific verification failure (e.g., "Ed25519 signature verification failed (INV-026)").
+	// +optional
+	VerificationFailedReason string `json:"verificationFailedReason,omitempty"`
+
 	// ObservedGeneration is the generation most recently reconciled.
 	// +optional
 	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
@@ -89,7 +105,7 @@ type InfrastructurePackReceiptStatus struct {
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:scope=Namespaced,shortName=ipr
 // +kubebuilder:printcolumn:name="Pack",type=string,JSONPath=".spec.clusterPackRef"
-// +kubebuilder:printcolumn:name="Verified",type=boolean,JSONPath=".spec.signatureVerified"
+// +kubebuilder:printcolumn:name="Verified",type=boolean,JSONPath=".status.verified"
 // +kubebuilder:printcolumn:name="Age",type=date,JSONPath=".metadata.creationTimestamp"
 
 // InfrastructurePackReceipt is the seam-core CRD for pack delivery acknowledgement on a tenant cluster.

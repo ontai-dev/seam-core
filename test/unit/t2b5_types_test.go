@@ -210,12 +210,16 @@ func TestInfrastructurePackReceipt_SignatureFields(t *testing.T) {
 	t.Parallel()
 	pr := v1alpha1.InfrastructurePackReceipt{
 		Spec: v1alpha1.InfrastructurePackReceiptSpec{
-			ClusterPackRef:    "cert-manager-helm-v1.14.0-r1",
-			TargetClusterRef:  "ccs-mgmt",
-			PackSignature:     "base64sig==",
-			SignatureVerified:  true,
-			RBACDigest:        "sha256:rbac",
-			WorkloadDigest:    "sha256:workload",
+			PackInstanceRef:  "cert-manager-ccs-dev",
+			SignatureRef:     "seam-pack-signed-ccs-dev-cert-manager-ccs-dev",
+			ClusterPackRef:   "cert-manager-helm-v1.14.0-r1",
+			TargetClusterRef: "ccs-mgmt",
+			RBACDigest:       "sha256:rbac",
+			WorkloadDigest:   "sha256:workload",
+		},
+		Status: v1alpha1.InfrastructurePackReceiptStatus{
+			Verified:  true,
+			Signature: "base64sig==",
 		},
 	}
 	data, err := json.Marshal(pr)
@@ -226,11 +230,17 @@ func TestInfrastructurePackReceipt_SignatureFields(t *testing.T) {
 	if err := json.Unmarshal(data, &got); err != nil {
 		t.Fatalf("unmarshal: %v", err)
 	}
-	if !got.Spec.SignatureVerified {
-		t.Error("SignatureVerified must survive round trip")
+	if !got.Status.Verified {
+		t.Error("Status.Verified must survive round trip")
+	}
+	if got.Status.Signature != "base64sig==" {
+		t.Errorf("Status.Signature: got %q", got.Status.Signature)
 	}
 	if got.Spec.RBACDigest != "sha256:rbac" {
 		t.Errorf("RBACDigest: got %q", got.Spec.RBACDigest)
+	}
+	if got.Spec.PackInstanceRef != "cert-manager-ccs-dev" {
+		t.Errorf("PackInstanceRef: got %q", got.Spec.PackInstanceRef)
 	}
 }
 

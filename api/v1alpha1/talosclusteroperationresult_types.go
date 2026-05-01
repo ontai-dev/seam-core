@@ -87,6 +87,12 @@ type InfrastructureTalosClusterOperationResultSpec struct {
 	// archiving the revision to the GraphQuery DB.
 	// +optional
 	Operations map[string]TalosClusterOperationRecord `json:"operations,omitempty"`
+
+	// OperationCount is the count of records in Operations for the current revision.
+	// Maintained by the writer alongside Operations so kubectl can display it
+	// as an integer column. Updated atomically with every Operations write.
+	// +optional
+	OperationCount int64 `json:"operationCount,omitempty"`
 }
 
 // InfrastructureTalosClusterOperationResultStatus is the observed state.
@@ -103,7 +109,7 @@ type InfrastructureTalosClusterOperationResultStatus struct {
 // +kubebuilder:printcolumn:name="Cluster",type=string,JSONPath=`.spec.clusterRef`
 // +kubebuilder:printcolumn:name="TalosVersion",type=string,JSONPath=`.spec.talosVersion`
 // +kubebuilder:printcolumn:name="Revision",type=integer,JSONPath=`.spec.revision`
-// +kubebuilder:printcolumn:name="Ops",type=integer,JSONPath=`.spec.operations`
+// +kubebuilder:printcolumn:name="Ops",type=integer,JSONPath=`.spec.operationCount`
 // +kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`
 
 // InfrastructureTalosClusterOperationResult accumulates the day-2 operation history

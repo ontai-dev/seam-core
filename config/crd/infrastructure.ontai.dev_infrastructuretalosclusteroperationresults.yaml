@@ -26,7 +26,7 @@ spec:
     - jsonPath: .spec.revision
       name: Revision
       type: integer
-    - jsonPath: .spec.operations
+    - jsonPath: .spec.operationCount
       name: Ops
       type: integer
     - jsonPath: .metadata.creationTimestamp
@@ -80,6 +80,13 @@ spec:
                 description: ClusterRef is the name of the InfrastructureTalosCluster
                   this result accumulates.
                 type: string
+              operationCount:
+                description: |-
+                  OperationCount is the count of records in Operations for the current revision.
+                  Maintained by the writer alongside Operations so kubectl can display it
+                  as an integer column. Updated atomically with every Operations write.
+                format: int64
+                type: integer
               operations:
                 additionalProperties:
                   description: |-

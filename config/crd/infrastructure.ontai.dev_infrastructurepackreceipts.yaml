@@ -20,7 +20,7 @@ spec:
     - jsonPath: .spec.clusterPackRef
       name: Pack
       type: string
-    - jsonPath: .spec.signatureVerified
+    - jsonPath: .status.verified
       name: Verified
       type: boolean
     - jsonPath: .metadata.creationTimestamp
@@ -53,8 +53,8 @@ spec:
           spec:
             description: |-
               InfrastructurePackReceiptSpec defines the desired state of an InfrastructurePackReceipt.
-              Written by conductor agent on the tenant cluster after verifying the signed PackInstance.
-              INV-026. conductor-schema.md.
+              Written by the packinstance pull loop on the tenant cluster conductor after
+              Ed25519 signature verification. INV-026. conductor-schema.md.
             properties:
               chartName:
                 description: ChartName is the Helm chart name. Carried from ClusterPack.
@@ -72,19 +72,24 @@ spec:
                   receipt acknowledges.
                 type: string
               deployedResources:
-                description: DeployedResources is the inventory of Kubernetes resources
-                  applied to the tenant cluster during pack-deploy. Used by conductor
-                  role=tenant for drift detection.
+                description: |-
+                  DeployedResources is the inventory of Kubernetes resources applied to the tenant cluster
+                  during the pack-deploy Job. Conductor role=tenant uses this list to detect drift by
+                  verifying each resource still exists with the expected state.
+                  CLUSTERPACK-BL-VERSION-CLEANUP, conductor-schema.md.
                 items:
-                  description: PackReceiptDeployedResource records a single resource
-                    applied during pack-deploy.
+                  description: |-
+                    PackReceiptDeployedResource records a single Kubernetes resource that was applied
+                    to the tenant cluster as part of a pack-deploy Job. Used by conductor role=tenant
+                    to detect drift between declared and actual cluster state.
+                    CLUSTERPACK-BL-VERSION-CLEANUP. conductor-schema.md.
                   properties:
                     apiVersion:
                       description: APIVersion is the full API version string (e.g.,
                         "apps/v1").
                       type: string
                     kind:
-                      description: Kind is the resource kind.
+                      description: Kind is the resource kind (e.g., "Deployment").
                       type: string
                     name:
                       description: Name is the resource name.
@@ -102,19 +107,19 @@ spec:
               helmVersion:
                 description: HelmVersion is the Helm SDK version. Carried from ClusterPack.
                 type: string
-              packSignature:
-                description: |-
-                  PackSignature is the base64-encoded Ed25519 signature from the management cluster conductor.
-                  INV-026.
+              packInstanceRef:
+                description: PackInstanceRef is the name of the PackInstance CR this
+                  receipt acknowledges.
                 type: string
               rbacDigest:
                 description: RBACDigest is the OCI digest of the RBAC layer. Carried
                   from ClusterPack for audit.
                 type: string
-              signatureVerified:
-                description: SignatureVerified indicates whether the conductor agent
-                  verified the pack signature.
-                type: boolean
+              signatureRef:
+                description: |-
+                  SignatureRef is the name of the signed artifact Secret on the management cluster
+                  (seam-pack-signed-{cluster}-{packInstance}) from which this receipt was derived.
+                type: string
               targetClusterRef:
                 description: TargetClusterRef is the name of the cluster this receipt
                   was generated on.
@@ -128,8 +133,9 @@ spec:
             - targetClusterRef
             type: object
           status:
-            description: InfrastructurePackReceiptStatus is the observed state of
-              an InfrastructurePackReceipt.
+            description: |-
+              InfrastructurePackReceiptStatus is the observed state of an InfrastructurePackReceipt.
+              Written by the packinstance pull loop after signature verification. INV-026.
             properties:
               conditions:
                 description: Conditions is the list of status conditions for this
@@ -193,6 +199,21 @@ spec:
                 description: ObservedGeneration is the generation most recently reconciled.
                 format: int64
                 type: integer
+              signature:
+                description: |-
+                  Signature is the base64-encoded Ed25519 signature from the signed artifact Secret.
+                  Stored for auditability and idempotency checking. INV-026.
+                type: string
+              verificationFailedReason:
+                description: |-
+                  VerificationFailedReason is set when Verified=false and describes the
+                  specific verification failure (e.g., "Ed25519 signature verification failed (INV-026)").
+                type: string
+              verified:
+                description: |-
+                  Verified indicates whether the Ed25519 signature on the PackInstance artifact
+                  was successfully verified against the management cluster's public key. INV-026.
+                type: boolean
             type: object
         type: object
     served: true

@@ -105,6 +105,14 @@ spec:
                 description: ClusterPackRef is the name of the ClusterPack CR that
                   was deployed.
                 type: string
+              clusterPackVersion:
+                description: |-
+                  ClusterPackVersion is the ClusterPack spec.version deployed in this operation.
+                  Populated by the Conductor executor at write time. Rollback anchor: the wrapper
+                  reads this field from the target POR revision to restore when spec.rollbackToRevision
+                  is set. Superseded PORs are retained with ontai.dev/superseded=true label to
+                  enable N-step rollback. seam-core-schema.md §7.8.
+                type: string
               completedAt:
                 description: CompletedAt is the time the capability execution finished.
                 format: date-time
@@ -177,14 +185,21 @@ spec:
                 type: string
               previousRevisionRef:
                 description: |-
-                  PreviousRevisionRef is the name of the PackOperationResult CR deleted when
+                  PreviousRevisionRef is the name of the PackOperationResult CR that was deleted when
                   this revision was written. Enables chain reconstruction for the full operation history.
                   Absent for revision 1 (no predecessor).
+                type: string
+              rbacDigest:
+                description: |-
+                  RBACDigest is the OCI digest of the RBAC layer deployed in this operation.
+                  Copied from ClusterPack.spec.rbacDigest at deploy time. Rollback anchor.
                 type: string
               revision:
                 description: |-
                   Revision is the monotonically increasing revision counter for this pack operation
-                  sequence. Incremented each time a new result supersedes the previous one.
+                  sequence. Incremented each time a new result supersedes the previous one. The
+                  single-active-revision pattern ensures exactly one PackOperationResult exists per
+                  ClusterPack operation sequence at any time.
                 format: int64
                 type: integer
               startedAt:
@@ -242,14 +257,21 @@ spec:
               talosClusterOperationResultRef:
                 description: |-
                   TalosClusterOperationResultRef is reserved for future cross-reference to a
-                  TalosCluster-scoped OperationResult. Stub field; not populated by any current controller.
+                  TalosCluster-scoped OperationResult. Stub field; not populated by any current
+                  controller.
                 type: string
               targetClusterRef:
                 description: TargetClusterRef is the name of the target cluster this
                   operation ran against.
                 type: string
+              workloadDigest:
+                description: |-
+                  WorkloadDigest is the OCI digest of the workload layer deployed in this operation.
+                  Copied from ClusterPack.spec.workloadDigest at deploy time. Rollback anchor.
+                type: string
             required:
             - capability
+            - revision
             - status
             type: object
           status:

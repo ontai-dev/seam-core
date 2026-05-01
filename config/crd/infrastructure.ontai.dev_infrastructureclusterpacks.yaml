@@ -231,6 +231,17 @@ spec:
                 - digest
                 - url
                 type: object
+              rollbackToRevision:
+                description: |-
+                  RollbackToRevision instructs the wrapper to restore this ClusterPack to the
+                  artifact version deployed at POR revision N-1. When set, the ClusterPackReconciler
+                  reads PreviousClusterPackVersion/PreviousRBACDigest/PreviousWorkloadDigest from
+                  the current POR, patches spec.version and spec.*Digest to those values, removes
+                  the spec-checksum-snapshot annotation, and clears this field. Only one-step
+                  rollback (to revision N-1) is supported per invocation. Set to 0 to disable.
+                  Governor-controlled only. wrapper-schema.md §6.2. seam-core-schema.md §7.8.
+                format: int64
+                type: integer
               sourceBuildRef:
                 description: SourceBuildRef is an opaque reference to the build that
                   produced this pack. Informational.
