@@ -91,8 +91,10 @@ type InfrastructureTalosClusterOperationResultSpec struct {
 	// OperationCount is the count of records in Operations for the current revision.
 	// Maintained by the writer alongside Operations so kubectl can display it
 	// as an integer column. Updated atomically with every Operations write.
+	// json tag intentionally omits omitempty so the writer always serializes 0;
+	// the printcolumn then renders "0" rather than blank on zero-operation revisions.
 	// +optional
-	OperationCount int64 `json:"operationCount,omitempty"`
+	OperationCount int64 `json:"operationCount"`
 }
 
 // InfrastructureTalosClusterOperationResultStatus is the observed state.
