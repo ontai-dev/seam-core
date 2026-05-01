@@ -288,6 +288,9 @@ spec:
             required:
             - mode
             type: object
+            x-kubernetes-validations:
+            - message: role is required when mode is import
+              rule: self.mode != 'import' || (has(self.role) && self.role != '')
           status:
             description: InfrastructureTalosClusterStatus is the observed state of
               an InfrastructureTalosCluster.

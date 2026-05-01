@@ -134,6 +134,7 @@ type InfrastructureCAPIConfig struct {
 
 // InfrastructureTalosClusterSpec is the declared desired state of an InfrastructureTalosCluster.
 // platform-schema.md §4.
+// +kubebuilder:validation:XValidation:rule="self.mode != 'import' || (has(self.role) && self.role != '')",message="role is required when mode is import"
 type InfrastructureTalosClusterSpec struct {
 	// Mode declares whether this cluster is bootstrapped from scratch or imported.
 	// +kubebuilder:validation:Enum=bootstrap;import
