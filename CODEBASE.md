@@ -61,6 +61,12 @@ Total: 12 CRD types. All under `infrastructure.ontai.dev/v1alpha1`. Resource nam
 - `KustomizeSource *InfrastructurePackKustomizeSource` (L62) -- struct at L34 (present in schema but no compiler implementation yet, T-12 open)
 - `RawSource *InfrastructurePackRawSource` (L66)
 
+**`InfrastructureTalosClusterSpec`** new field (`taloscluster_types.go`):
+- `PkiRotationThresholdDays int32` (L210) -- days before cert expiry to auto-trigger PKI rotation. Default 30. kubebuilder:default=30, minimum=1. platform-schema.md §13.
+
+**`InfrastructureTalosClusterStatus`** new field (`taloscluster_types.go`):
+- `PkiExpiryDate *metav1.Time` (L231) -- earliest certificate expiry across talosconfig and kubeconfig Secrets. Set by TalosCluster reconciler. platform-schema.md §13.
+
 ### TalosCluster CRD CEL validation state
 
 No `x-kubernetes-validations` rules exist in `config/crd/infrastructure.ontai.dev_infrastructuretalosclusters.yaml`. The YAML includes comments "Mandatory on mode=import" (L267) for the `role` field, but this is NOT enforced at admission. **T-04a open**: CEL rule `self.mode != 'import' || (has(self.role) && self.role != '')` on `InfrastructureTalosClusterSpec` is required. Run `make generate-crd` after adding `+kubebuilder:validation:XValidation` marker.
