@@ -597,6 +597,14 @@ const (
 	// ReasonConductorBootstrapPending is set on ConductorReady=False while the bootstrap
 	// window setup is still in progress (kubeconfig not yet available, or items pending).
 	ReasonConductorBootstrapPending = "ConductorBootstrapPending"
+
+	// ReasonConductorDeploymentAvailable is set on ConductorReady=True when the conductor
+	// Deployment in ont-system on the tenant cluster reaches Available status.
+	ReasonConductorDeploymentAvailable = "ConductorDeploymentAvailable"
+
+	// ReasonConductorDeploymentUnavailable is set on ConductorReady=False when the conductor
+	// Deployment in ont-system on the tenant cluster is not yet Available.
+	ReasonConductorDeploymentUnavailable = "ConductorDeploymentUnavailable"
 )
 
 const (
