@@ -200,6 +200,14 @@ type InfrastructureTalosClusterSpec struct {
 	// Lineage is the sealed causal chain record for this root declaration. Immutable after creation.
 	// +optional
 	Lineage *lineage.SealedCausalChain `json:"lineage,omitempty"`
+
+	// PkiRotationThresholdDays is the number of days before cert expiry at which
+	// the TalosCluster reconciler auto-creates a PKIRotation CR. Default 0 means
+	// use the platform operator built-in default (30 days). platform-schema.md §13.
+	// +optional
+	// +kubebuilder:default=30
+	// +kubebuilder:validation:Minimum=1
+	PkiRotationThresholdDays int32 `json:"pkiRotationThresholdDays,omitempty"`
 }
 
 // InfrastructureTalosClusterStatus is the observed state of an InfrastructureTalosCluster.
@@ -227,6 +235,13 @@ type InfrastructureTalosClusterStatus struct {
 	// Conditions is the list of status conditions for this TalosCluster.
 	// +optional
 	Conditions []metav1.Condition `json:"conditions,omitempty"`
+
+	// PkiExpiryDate is the earliest certificate expiry across the talosconfig and
+	// kubeconfig Secrets for this cluster. Set by the TalosCluster reconciler.
+	// When this date approaches spec.pkiRotationThresholdDays, a PKIRotation CR
+	// is created automatically. platform-schema.md §13.
+	// +optional
+	PkiExpiryDate *metav1.Time `json:"pkiExpiryDate,omitempty"`
 }
 
 // +kubebuilder:object:root=true
